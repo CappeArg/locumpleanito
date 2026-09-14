@@ -62,59 +62,62 @@ ${currentUrl}`;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content card-zamba-verde" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h2 style={{ fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.4rem', margin: 0 }}>
-            <Share2 size={20} color="var(--z-verde-dark)" />
-            <span>Compartir en WhatsApp</span>
+          <h2 style={{ fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.45rem', margin: 0 }}>
+            <Share2 size={18} style={{ color: 'var(--notion-text-muted)' }} />
+            <span>Compartir Colecta</span>
           </h2>
           <button
             onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
+            className="notion-btn btn-ghost btn-sm"
+            style={{ padding: '0.3rem', borderRadius: 'var(--radius-sm)' }}
+            aria-label="Cerrar"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
-        <p style={{ fontSize: '0.9rem', color: 'var(--z-tinta-suave)', marginBottom: '0.75rem' }}>
-          Copiá este mensaje para enviarlo al grupo de la sala:
+        <p style={{ fontSize: '0.88rem', color: 'var(--notion-text-muted)', marginBottom: '0.75rem' }}>
+          Texto preformateado para enviar al grupo de WhatsApp de la sala:
         </p>
 
         <div
           style={{
-            background: '#ffffff',
-            border: '2px solid var(--z-borde)',
-            borderRadius: 'var(--radius-sm)',
+            background: 'var(--callout-gray-bg)',
+            border: '1px solid var(--notion-border)',
+            borderRadius: 'var(--radius-md)',
             padding: '0.85rem',
-            fontFamily: 'monospace',
-            fontSize: '0.85rem',
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.82rem',
             whiteSpace: 'pre-wrap',
             maxHeight: '180px',
             overflowY: 'auto',
-            marginBottom: '1rem',
-            lineHeight: '1.4'
+            marginBottom: '1.25rem',
+            lineHeight: '1.5',
+            color: 'var(--notion-text)'
           }}
         >
           {mensajeWhatsApp}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+        <div style={{ display: 'flex', gap: '0.65rem' }}>
           <button
-            onClick={handleOpenWhatsApp}
-            className="btn-zamba btn-verde btn-block"
-            style={{ gap: '0.5rem' }}
+            onClick={handleCopy}
+            className="notion-btn btn-secondary"
+            style={{ flex: 1 }}
           >
-            <MessageCircle size={18} />
-            <span>Abrir WhatsApp directo</span>
+            <Copy size={16} />
+            <span>Copiar texto</span>
           </button>
 
           <button
-            onClick={handleCopy}
-            className="btn-zamba btn-sol btn-block"
-            style={{ gap: '0.5rem' }}
+            onClick={handleOpenWhatsApp}
+            className="notion-btn btn-primary"
+            style={{ flex: 1.2 }}
           >
-            <Copy size={18} />
-            <span>Copiar mensaje</span>
+            <MessageCircle size={16} />
+            <span>Abrir WhatsApp</span>
           </button>
         </div>
       </div>

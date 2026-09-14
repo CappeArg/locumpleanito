@@ -8,7 +8,7 @@ interface CopyButtonProps {
   successMessage?: string;
   className?: string;
   size?: 'sm' | 'md' | 'lg';
-  variant?: 'celeste' | 'sol' | 'verde' | 'blanco' | 'rojo';
+  variant?: 'celeste' | 'sol' | 'verde' | 'blanco' | 'rojo' | 'secondary' | 'primary';
 }
 
 export const CopyButton: React.FC<CopyButtonProps> = ({
@@ -17,7 +17,7 @@ export const CopyButton: React.FC<CopyButtonProps> = ({
   successMessage = '¡Copiado al portapapeles! 📋',
   className = '',
   size = 'sm',
-  variant = 'sol'
+  variant = 'blanco'
 }) => {
   const [copied, setCopied] = useState(false);
   const { showToast } = useSala();
@@ -28,7 +28,6 @@ export const CopyButton: React.FC<CopyButtonProps> = ({
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(textToCopy);
       } else {
-        // Fallback para navegadores antiguos o http
         const textArea = document.createElement('textarea');
         textArea.value = textToCopy;
         textArea.style.position = 'fixed';
@@ -53,11 +52,21 @@ export const CopyButton: React.FC<CopyButtonProps> = ({
     <button
       type="button"
       onClick={handleCopy}
-      className={`btn-zamba btn-${variant} btn-${size} ${className}`}
+      className={`notion-btn btn-${variant} btn-${size} ${className}`}
       title="Copiar al portapapeles"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.35rem',
+        cursor: 'pointer'
+      }}
     >
-      {copied ? <Check size={16} strokeWidth={3} /> : <Copy size={16} />}
-      <span>{copied ? '¡Copiado!' : label}</span>
+      {copied ? (
+        <Check size={size === 'sm' ? 14 : 16} style={{ color: '#0f7b6c' }} />
+      ) : (
+        <Copy size={size === 'sm' ? 14 : 16} />
+      )}
+      <span>{copied ? 'Copiado' : label}</span>
     </button>
   );
 };

@@ -1,0 +1,19 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Salas escolares: lectura y creación comunitaria
+    match /salas/{salaId} {
+      allow read, write: if true;
+    }
+    
+    // Cumpleaños dentro de las salas
+    match /cumpleanios/{cumpleId} {
+      allow read, write: if true;
+    }
+    
+    // Participantes y pagos avisados por las familias
+    match /participantes/{participanteId} {
+      allow read, write: if true;
+    }
+  }
+}

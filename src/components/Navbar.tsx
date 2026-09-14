@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Sparkles } from 'lucide-react';
-import { BuntingBanner } from './BuntingBanner';
+import { ArrowLeft, ChevronRight } from 'lucide-react';
 
 interface NavbarProps {
   title?: string;
@@ -31,61 +30,57 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
   };
 
+  const isHome = title === 'LoCumpleanito' && !showBack;
+
   return (
-    <header style={{ position: 'sticky', top: 0, zIndex: 90 }}>
-      <div className="header-zamba">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          {showBack && (
-            <button
-              onClick={handleBack}
-              className="btn-zamba btn-blanco btn-sm"
-              style={{ padding: '0.4rem', borderRadius: '50%', width: '36px', height: '36px' }}
-              aria-label="Volver"
-            >
-              <ArrowLeft size={18} />
-            </button>
-          )}
+    <header className="notion-topbar">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+        {showBack && (
+          <button
+            onClick={handleBack}
+            className="notion-btn btn-ghost btn-sm"
+            style={{ padding: '0.35rem', borderRadius: 'var(--radius-sm)', width: '32px', height: '32px' }}
+            aria-label="Volver"
+          >
+            <ArrowLeft size={16} />
+          </button>
+        )}
 
-          <div>
-            <h1
-              onClick={() => navigate('/')}
-              style={{
-                fontSize: '1.45rem',
-                color: '#fff',
-                textShadow: '2px 2px 0px var(--z-borde)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                margin: 0
-              }}
-            >
-              <span>{title}</span>
-              <span style={{ fontSize: '1.2rem' }}>🎈</span>
-            </h1>
-            {subtitle && (
-              <p
-                style={{
-                  fontSize: '0.8rem',
-                  color: 'var(--z-sol)',
-                  fontWeight: 800,
-                  textShadow: '1px 1px 0px rgba(0,0,0,0.3)',
-                  margin: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.25rem'
-                }}
+        <div className="notion-breadcrumbs" style={{ minWidth: 0 }}>
+          {!isHome ? (
+            <>
+              <span
+                onClick={() => navigate('/')}
+                style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}
+                title="Ir al inicio"
               >
-                <Sparkles size={12} />
-                {subtitle}
-              </p>
-            )}
-          </div>
+                <span>🎈</span>
+                <span style={{ fontWeight: 500 }}>LoCumpleanito</span>
+              </span>
+              <ChevronRight size={14} style={{ color: 'var(--notion-text-subtle)', flexShrink: 0 }} />
+              <div style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{ fontWeight: 600, color: 'var(--notion-text)' }}>
+                  {title}
+                </span>
+                {subtitle && (
+                  <span style={{ marginLeft: '0.35rem', fontSize: '0.78rem', color: 'var(--notion-text-muted)' }}>
+                    ({subtitle})
+                  </span>
+                )}
+              </div>
+            </>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <span style={{ fontSize: '1.2rem' }}>🎈</span>
+              <span style={{ fontWeight: 700, fontSize: '0.98rem', color: 'var(--notion-text)' }}>
+                LoCumpleanito
+              </span>
+            </div>
+          )}
         </div>
-
-        {rightAction && <div>{rightAction}</div>}
       </div>
-      <BuntingBanner />
+
+      {rightAction && <div>{rightAction}</div>}
     </header>
   );
 };

@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Cake, Sparkles, CreditCard, Gift } from 'lucide-react';
+import { Sparkles, CreditCard, Gift } from 'lucide-react';
 import { api } from '../services/api';
 import { useSala } from '../context/SalaContext';
 import type { Sala } from '../types';
 import { Navbar } from '../components/Navbar';
-import { UnlockModal } from '../components/UnlockModal';
 import { triggerConfetti } from '../utils/confetti';
 
 export const NuevoCumpleView: React.FC = () => {
   const { salaId } = useParams<{ salaId: string }>();
   const navigate = useNavigate();
-  const { isSalaUnlocked, showToast } = useSala();
+  const { showToast } = useSala();
 
   const [sala, setSala] = useState<Sala | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,7 +41,7 @@ export const NuevoCumpleView: React.FC = () => {
   if (loading) {
     return (
       <div className="app-container" style={{ alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '1.2rem' }}>
+        <p style={{ color: 'var(--notion-text-muted)', fontSize: '0.95rem' }}>
           Cargando formulario... 🎈
         </p>
       </div>
@@ -53,9 +52,9 @@ export const NuevoCumpleView: React.FC = () => {
     return (
       <div className="app-container" style={{ padding: '2rem', textAlign: 'center' }}>
         <Navbar title="LoCumpleanito" showBack backTo="/" />
-        <div className="card-zamba card-zamba-rojo" style={{ marginTop: '2rem' }}>
+        <div className="card-zamba" style={{ marginTop: '2rem' }}>
           <h2>Sala no encontrada</h2>
-          <button onClick={() => navigate('/')} className="btn-zamba btn-blanco" style={{ marginTop: '1rem' }}>
+          <button onClick={() => navigate('/')} className="notion-btn btn-secondary" style={{ marginTop: '1rem' }}>
             Ir al Inicio
           </button>
         </div>
@@ -63,7 +62,6 @@ export const NuevoCumpleView: React.FC = () => {
     );
   }
 
-  const unlocked = isSalaUnlocked(sala.id);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,33 +106,31 @@ export const NuevoCumpleView: React.FC = () => {
         backTo={`/sala/${sala.id}`}
       />
 
-      {!unlocked && <UnlockModal sala={sala} />}
 
-      <main style={{ padding: '1.25rem', flex: 1 }}>
-        <div className="card-zamba card-zamba-sol" style={{ position: 'relative', marginBottom: '1.25rem' }}>
-          <div className="tape-sticker" />
-          <h2 style={{ fontSize: '1.35rem', display: 'flex', alignItems: 'center', gap: '0.4rem', margin: '0.25rem 0' }}>
-            <Cake size={22} color="var(--z-celeste-dark)" />
-            <span>Armar Colecta de Cumpleaños</span>
-          </h2>
-          <p style={{ fontSize: '0.88rem', color: 'var(--z-tinta-suave)', margin: 0 }}>
-            Completá los datos bancarios para que los demás padres te transfieran el dinero del regalo.
+      <main style={{ padding: '1.5rem', flex: 1 }}>
+        <div style={{ paddingBottom: '0.75rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--notion-divider)' }}>
+          <div style={{ fontSize: '2.2rem', lineHeight: 1, marginBottom: '0.5rem' }}>🎂</div>
+          <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>
+            Nueva Colecta de Cumpleaños
+          </h1>
+          <p style={{ fontSize: '0.9rem', color: 'var(--notion-text-muted)', margin: 0 }}>
+            Completá los datos bancarios para que los demás padres puedan transferirte el valor del regalo.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {/* Datos del Agasajado */}
           <div className="card-zamba" style={{ background: '#fff', marginBottom: 0 }}>
-            <h3 style={{ fontSize: '1.1rem', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <Sparkles size={16} color="var(--z-sol-dark)" />
+            <h3 style={{ fontSize: '1rem', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <Sparkles size={16} style={{ color: 'var(--notion-text-muted)' }} />
               <span>¿Quién cumple años?</span>
             </h3>
 
             <div className="input-group">
-              <label className="input-label">Nombre del niño/a agasajado *</label>
+              <label className="input-label">Nombre del agasajado *</label>
               <input
                 type="text"
-                className="input-zamba"
+                className="notion-input"
                 placeholder="Ej: Mateo / Valentina"
                 value={nombreAgasajado}
                 onChange={(e) => setNombreAgasajado(e.target.value)}
@@ -144,22 +140,22 @@ export const NuevoCumpleView: React.FC = () => {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-              <div className="input-group">
-                <label className="input-label">Fecha festejo *</label>
+              <div className="input-group" style={{ marginBottom: 0 }}>
+                <label className="input-label">Fecha del festejo *</label>
                 <input
                   type="date"
-                  className="input-zamba"
+                  className="notion-input"
                   value={fechaCumple}
                   onChange={(e) => setFechaCumple(e.target.value)}
                   required
                 />
               </div>
 
-              <div className="input-group">
+              <div className="input-group" style={{ marginBottom: 0 }}>
                 <label className="input-label">Fecha límite pago</label>
                 <input
                   type="date"
-                  className="input-zamba"
+                  className="notion-input"
                   value={fechaLimitePago}
                   onChange={(e) => setFechaLimitePago(e.target.value)}
                 />
@@ -169,8 +165,8 @@ export const NuevoCumpleView: React.FC = () => {
 
           {/* Datos de Transferencia */}
           <div className="card-zamba" style={{ background: '#fff', marginBottom: 0 }}>
-            <h3 style={{ fontSize: '1.1rem', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <CreditCard size={16} color="var(--z-verde-dark)" />
+            <h3 style={{ fontSize: '1rem', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <CreditCard size={16} style={{ color: 'var(--notion-text-muted)' }} />
               <span>Datos para la Transferencia</span>
             </h3>
 
@@ -178,7 +174,7 @@ export const NuevoCumpleView: React.FC = () => {
               <label className="input-label">Monto por familia ($ ARS) *</label>
               <input
                 type="number"
-                className="input-zamba"
+                className="notion-input"
                 placeholder="3500"
                 value={montoPorPersona}
                 onChange={(e) => setMontoPorPersona(e.target.value === '' ? '' : Number(e.target.value))}
@@ -186,8 +182,8 @@ export const NuevoCumpleView: React.FC = () => {
                 step="50"
                 required
               />
-              <small style={{ color: 'var(--z-tinta-suave)', fontSize: '0.75rem' }}>
-                Todos los que participen pagarán esta misma cantidad.
+              <small style={{ color: 'var(--notion-text-subtle)', fontSize: '0.78rem', marginTop: '0.2rem' }}>
+                Todos los que participen aportarán la misma cantidad.
               </small>
             </div>
 
@@ -195,7 +191,7 @@ export const NuevoCumpleView: React.FC = () => {
               <label className="input-label">Alias de transferencia *</label>
               <input
                 type="text"
-                className="input-zamba"
+                className="notion-input"
                 placeholder="Ej: regalo.mateo.mp"
                 value={alias}
                 onChange={(e) => setAlias(e.target.value)}
@@ -207,7 +203,7 @@ export const NuevoCumpleView: React.FC = () => {
               <label className="input-label">Titular de la cuenta *</label>
               <input
                 type="text"
-                className="input-zamba"
+                className="notion-input"
                 placeholder="Ej: María Clara Pérez (Mamá de Sofi)"
                 value={titular}
                 onChange={(e) => setTitular(e.target.value)}
@@ -216,22 +212,22 @@ export const NuevoCumpleView: React.FC = () => {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-              <div className="input-group">
+              <div className="input-group" style={{ marginBottom: 0 }}>
                 <label className="input-label">Banco o Billetera</label>
                 <input
                   type="text"
-                  className="input-zamba"
+                  className="notion-input"
                   placeholder="Ej: Mercado Pago"
                   value={banco}
                   onChange={(e) => setBanco(e.target.value)}
                 />
               </div>
 
-              <div className="input-group">
+              <div className="input-group" style={{ marginBottom: 0 }}>
                 <label className="input-label">CBU / CVU (opcional)</label>
                 <input
                   type="text"
-                  className="input-zamba"
+                  className="notion-input"
                   placeholder="22 dígitos"
                   value={cbu}
                   onChange={(e) => setCbu(e.target.value)}
@@ -242,14 +238,14 @@ export const NuevoCumpleView: React.FC = () => {
 
           {/* Regalo Planeado */}
           <div className="card-zamba" style={{ background: '#fff', marginBottom: 0 }}>
-            <h3 style={{ fontSize: '1.1rem', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <Gift size={16} color="var(--z-rojo)" />
+            <h3 style={{ fontSize: '1rem', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <Gift size={16} style={{ color: 'var(--notion-text-muted)' }} />
               <span>Idea de Regalo (opcional)</span>
             </h3>
 
-            <div className="input-group">
+            <div className="input-group" style={{ marginBottom: 0 }}>
               <textarea
-                className="input-zamba"
+                className="notion-input"
                 placeholder="Ej: Juego de mesa y libro de cuentos. (Podrás subir fotos del regalo más adelante)."
                 value={regaloDescripcion}
                 onChange={(e) => setRegaloDescripcion(e.target.value)}
@@ -262,7 +258,7 @@ export const NuevoCumpleView: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate(`/sala/${sala.id}`)}
-              className="btn-zamba btn-blanco"
+              className="notion-btn btn-secondary"
               style={{ flex: 1 }}
             >
               Cancelar
@@ -271,10 +267,10 @@ export const NuevoCumpleView: React.FC = () => {
             <button
               type="submit"
               disabled={guardando}
-              className="btn-zamba btn-verde btn-lg"
+              className="notion-btn btn-primary btn-lg"
               style={{ flex: 2 }}
             >
-              {guardando ? 'Creando Colecta...' : '¡Publicar Colecta! 🎈'}
+              {guardando ? 'Creando Colecta...' : 'Publicar Colecta'}
             </button>
           </div>
         </form>

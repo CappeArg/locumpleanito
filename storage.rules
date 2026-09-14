@@ -1,0 +1,9 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Permitir lectura y subida de fotos de regalos y comprobantes de colecta
+    match /{allPaths=**} {
+      allow read, write: if true;
+    }
+  }
+}

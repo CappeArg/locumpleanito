@@ -1,8 +1,8 @@
 export interface Sala {
   id: string;
   nombre: string;
-  clave: string; // Palabra clave (ej: "Arcoiris")
   colegio?: string;
+  disponible?: string; // Atributo para soft delete manual en Firebase (vacío = disponible)
   creadoEn: number;
 }
 
@@ -13,6 +13,7 @@ export interface Participante {
   cumpleId: string;
   nombreFamilia: string;
   estado: EstadoParticipante;
+  disponible?: string; // Atributo para soft delete manual en Firebase (vacío = disponible)
   notificadoEn: number;
   confirmadoEn?: number;
   nota?: string;
@@ -31,8 +32,8 @@ export interface Cumpleanios {
   banco?: string;
   regaloDescripcion?: string;
   fotosRegalo?: string[];
-  fotosComprobantes?: string[];
   estado: 'activo' | 'cerrado';
+  disponible?: string; // Atributo para soft delete manual en Firebase (vacío = disponible)
   creadoEn: number;
   compradorNombre?: string;
 }

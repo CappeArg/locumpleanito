@@ -40,4 +40,11 @@ if (isFirebaseConfigured) {
   console.info("💡 Modo Local Interactivo activo (Podés configurar Firebase en .env.local cuando lo desees)");
 }
 
+export const getFirebaseStatus = () => ({
+  configured: isFirebaseConfigured,
+  projectId: firebaseConfig.projectId || null,
+  hasDb: Boolean(db),
+  hasStorage: Boolean(storage)
+});
+
 export { app, db, storage };

@@ -7,8 +7,7 @@ import {
   where, 
   onSnapshot, 
   updateDoc, 
-  deleteDoc,
-  orderBy
+  deleteDoc
 } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from '../firebase/config';
 import type { Sala, Cumpleanios, Participante } from '../types';
@@ -25,13 +24,26 @@ const notifyDataChange = () => {
   window.dispatchEvent(new CustomEvent(EVENT_NAME));
 };
 
+// Helper para comprobar si un elemento está disponible (soft delete manual en Firebase si no está vacío)
+export function isItemDisponible(item: { disponible?: string | boolean | null } | null | undefined): boolean {
+  if (!item) return false;
+  if (item.disponible === undefined || item.disponible === null) return true;
+  if (typeof item.disponible === 'string') {
+    return item.disponible.trim() === '';
+  }
+  if (typeof item.disponible === 'boolean') {
+    return item.disponible;
+  }
+  return false;
+}
+
 // Datos iniciales de demostración estilo Zamba
 const initialSalas: Sala[] = [
   {
     id: 'sala-arcoiris',
     nombre: 'Sala Arcoiris 🌈 (Jardín Belgrano)',
-    clave: 'arcoiris',
     colegio: 'Escuela N° 9',
+    disponible: '',
     creadoEn: Date.now() - 86400000 * 10
   }
 ];
@@ -53,8 +65,8 @@ const initialCumples: Cumpleanios[] = [
     fotosRegalo: [
       'https://images.unsplash.com/photo-1513151233558-d860c5398176?w=600&auto=format&fit=crop&q=80'
     ],
-    fotosComprobantes: [],
     estado: 'activo',
+    disponible: '',
     creadoEn: Date.now() - 86400000 * 3
   },
   {
@@ -70,8 +82,8 @@ const initialCumples: Cumpleanios[] = [
     compradorNombre: 'Gonzalo Fernández',
     regaloDescripcion: 'Set de arte y mochila de exploradora.',
     fotosRegalo: [],
-    fotosComprobantes: [],
     estado: 'activo',
+    disponible: '',
     creadoEn: Date.now() - 86400000 * 1
   }
 ];
@@ -82,6 +94,7 @@ const initialParticipantes: Participante[] = [
     cumpleId: 'cumple-mateo-1',
     nombreFamilia: 'Familia González (Lucas)',
     estado: 'confirmado',
+    disponible: '',
     notificadoEn: Date.now() - 86400000 * 2,
     confirmadoEn: Date.now() - 86400000 * 1
   },
@@ -90,6 +103,7 @@ const initialParticipantes: Participante[] = [
     cumpleId: 'cumple-mateo-1',
     nombreFamilia: 'Sofi y mamá Clara',
     estado: 'confirmado',
+    disponible: '',
     notificadoEn: Date.now() - 86400000 * 2,
     confirmadoEn: Date.now() - 86400000 * 2
   },
@@ -98,6 +112,7 @@ const initialParticipantes: Participante[] = [
     cumpleId: 'cumple-mateo-1',
     nombreFamilia: 'Familia Rossi (Emma)',
     estado: 'notificado',
+    disponible: '',
     notificadoEn: Date.now() - 3600000 * 4
   },
   {
@@ -105,6 +120,7 @@ const initialParticipantes: Participante[] = [
     cumpleId: 'cumple-mateo-1',
     nombreFamilia: 'Joaquín y papá Roberto',
     estado: 'notificado',
+    disponible: '',
     notificadoEn: Date.now() - 3600000 * 2
   },
   {
@@ -112,6 +128,7 @@ const initialParticipantes: Participante[] = [
     cumpleId: 'cumple-valen-2',
     nombreFamilia: 'Familia Benja Fernández',
     estado: 'confirmado',
+    disponible: '',
     notificadoEn: Date.now() - 3600000 * 5,
     confirmadoEn: Date.now() - 3600000 * 4
   }
@@ -147,26 +164,91 @@ if (!localStorage.getItem(LOCAL_STORAGE_KEY_PARTS)) {
   setLocal(LOCAL_STORAGE_KEY_PARTS, initialParticipantes);
 }
 
+// Eliminar propiedades undefined para compatibilidad estricta con Firestore
+function sanitizeForFirestore<T extends Record<string, any>>(data: T): Record<string, any> {
+  const result: Record<string, any> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined) {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
 // ==========================================
 // UNIFIED EXPORTED API
 // ==========================================
 
 export const api = {
   // SALAS
+  subscribeToSalas(callback: (salas: Sala[]) => void): () => void {
+    if (isFirebaseConfigured && db) {
+      try {
+        const q = collection(db, 'salas');
+        return onSnapshot(q, (snapshot) => {
+          const list = snapshot.docs
+            .map(d => ({ id: d.id, ...d.data() } as Sala))
+            .filter(s => isItemDisponible(s));
+          // Si Firestore está vacío, sembrar sala demo
+          if (list.length === 0 && snapshot.docs.length === 0) {
+            this.getSala('sala-arcoiris').then(() => {});
+          }
+          list.sort((a, b) => (b.creadoEn || 0) - (a.creadoEn || 0));
+          callback(list);
+        }, (err) => {
+          console.warn('Error en snapshot de salas Firestore:', err);
+        });
+      } catch (err) {
+        console.warn('Fallback to local subscribe for salas:', err);
+      }
+    }
+
+    const loadLocal = () => {
+      const all = getLocal<Sala[]>(LOCAL_STORAGE_KEY_SALAS, initialSalas);
+      const filtered = all.filter(s => isItemDisponible(s)).sort((a, b) => b.creadoEn - a.creadoEn);
+      callback(filtered);
+    };
+
+    loadLocal();
+    window.addEventListener(EVENT_NAME, loadLocal);
+    return () => window.removeEventListener(EVENT_NAME, loadLocal);
+  },
+
   async getSala(salaId: string): Promise<Sala | null> {
     if (isFirebaseConfigured && db) {
       try {
         const snap = await getDoc(doc(db, 'salas', salaId));
-        return snap.exists() ? ({ id: snap.id, ...snap.data() } as Sala) : null;
+        if (snap.exists()) {
+          const s = { id: snap.id, ...snap.data() } as Sala;
+          return isItemDisponible(s) ? s : null;
+        }
+
+        // Si es la sala demo y aún no existe en Firestore, crearla con sus datos de prueba
+        const demo = initialSalas.find(s => s.id.toLowerCase() === salaId.toLowerCase());
+        if (demo) {
+          try {
+            await setDoc(doc(db, 'salas', demo.id), sanitizeForFirestore(demo));
+            for (const c of initialCumples.filter(item => item.salaId === demo.id)) {
+              await setDoc(doc(db, 'cumpleanios', c.id), sanitizeForFirestore(c));
+            }
+            for (const p of initialParticipantes) {
+              await setDoc(doc(db, 'participantes', p.id), sanitizeForFirestore(p));
+            }
+          } catch (seedErr) {
+            console.warn('No se pudieron sembrar datos demo en Firestore:', seedErr);
+          }
+          return demo;
+        }
       } catch (err) {
         console.error('Error fetching sala from firestore:', err);
       }
     }
     const salas = getLocal<Sala[]>(LOCAL_STORAGE_KEY_SALAS, initialSalas);
-    return salas.find(s => s.id.toLowerCase() === salaId.toLowerCase()) || null;
+    const found = salas.find(s => s.id.toLowerCase() === salaId.toLowerCase()) || null;
+    return isItemDisponible(found) ? found : null;
   },
 
-  async createSala(nombre: string, clave: string, colegio?: string): Promise<Sala> {
+  async createSala(nombre: string, colegio?: string): Promise<Sala> {
     const slug = nombre
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
@@ -176,14 +258,14 @@ export const api = {
     const newSala: Sala = {
       id,
       nombre,
-      clave: clave.trim().toLowerCase(),
       colegio: colegio || '',
+      disponible: '',
       creadoEn: Date.now()
     };
 
     if (isFirebaseConfigured && db) {
       try {
-        await setDoc(doc(db, 'salas', id), newSala);
+        await setDoc(doc(db, 'salas', id), sanitizeForFirestore(newSala));
       } catch (err) {
         console.error('Error saving sala in firestore:', err);
       }
@@ -200,14 +282,19 @@ export const api = {
   subscribeToCumples(salaId: string, callback: (cumples: Cumpleanios[]) => void): () => void {
     if (isFirebaseConfigured && db) {
       try {
+        // Consultamos por salaId sin orderBy compuesto para no bloquear por índices de Firestore
         const q = query(
           collection(db, 'cumpleanios'), 
-          where('salaId', '==', salaId),
-          orderBy('creadoEn', 'desc')
+          where('salaId', '==', salaId)
         );
         return onSnapshot(q, (snapshot) => {
-          const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Cumpleanios));
+          const list = snapshot.docs
+            .map(d => ({ id: d.id, ...d.data() } as Cumpleanios))
+            .filter(c => isItemDisponible(c));
+          list.sort((a, b) => (b.creadoEn || 0) - (a.creadoEn || 0));
           callback(list);
+        }, (error) => {
+          console.warn('Error en snapshot de cumples Firestore:', error);
         });
       } catch (err) {
         console.warn('Fallback to local subscribe for cumples:', err);
@@ -217,7 +304,7 @@ export const api = {
     const loadLocal = () => {
       const all = getLocal<Cumpleanios[]>(LOCAL_STORAGE_KEY_CUMPLES, initialCumples);
       const filtered = all
-        .filter(c => c.salaId.toLowerCase() === salaId.toLowerCase())
+        .filter(c => c.salaId.toLowerCase() === salaId.toLowerCase() && isItemDisponible(c))
         .sort((a, b) => b.creadoEn - a.creadoEn);
       callback(filtered);
     };
@@ -231,13 +318,18 @@ export const api = {
     if (isFirebaseConfigured && db) {
       try {
         const snap = await getDoc(doc(db, 'cumpleanios', cumpleId));
-        return snap.exists() ? ({ id: snap.id, ...snap.data() } as Cumpleanios) : null;
+        if (snap.exists()) {
+          const c = { id: snap.id, ...snap.data() } as Cumpleanios;
+          return isItemDisponible(c) ? c : null;
+        }
+        return null;
       } catch (err) {
         console.error('Error fetching cumple from firestore:', err);
       }
     }
     const cumples = getLocal<Cumpleanios[]>(LOCAL_STORAGE_KEY_CUMPLES, initialCumples);
-    return cumples.find(c => c.id === cumpleId) || null;
+    const found = cumples.find(c => c.id === cumpleId) || null;
+    return isItemDisponible(found) ? found : null;
   },
 
   subscribeToCumple(cumpleId: string, callback: (cumple: Cumpleanios | null) => void): () => void {
@@ -245,7 +337,8 @@ export const api = {
       try {
         return onSnapshot(doc(db, 'cumpleanios', cumpleId), (snapshot) => {
           if (snapshot.exists()) {
-            callback({ id: snapshot.id, ...snapshot.data() } as Cumpleanios);
+            const item = { id: snapshot.id, ...snapshot.data() } as Cumpleanios;
+            callback(isItemDisponible(item) ? item : null);
           } else {
             callback(null);
           }
@@ -258,7 +351,7 @@ export const api = {
     const loadLocal = () => {
       const all = getLocal<Cumpleanios[]>(LOCAL_STORAGE_KEY_CUMPLES, initialCumples);
       const item = all.find(c => c.id === cumpleId) || null;
-      callback(item);
+      callback(isItemDisponible(item) ? item : null);
     };
 
     loadLocal();
@@ -278,13 +371,13 @@ export const api = {
       id,
       estado: 'activo',
       fotosRegalo: data.fotosRegalo || [],
-      fotosComprobantes: data.fotosComprobantes || [],
+      disponible: '',
       creadoEn: Date.now()
     };
 
     if (isFirebaseConfigured && db) {
       try {
-        await setDoc(doc(db, 'cumpleanios', id), newCumple);
+        await setDoc(doc(db, 'cumpleanios', id), sanitizeForFirestore(newCumple));
       } catch (err) {
         console.error('Error saving cumple in firestore:', err);
       }
@@ -300,7 +393,7 @@ export const api = {
   async updateCumple(cumpleId: string, updates: Partial<Cumpleanios>): Promise<void> {
     if (isFirebaseConfigured && db) {
       try {
-        await updateDoc(doc(db, 'cumpleanios', cumpleId), updates);
+        await updateDoc(doc(db, 'cumpleanios', cumpleId), sanitizeForFirestore(updates));
       } catch (err) {
         console.error('Error updating firestore cumple:', err);
       }
@@ -320,7 +413,9 @@ export const api = {
       try {
         const q = query(collection(db, 'participantes'), where('cumpleId', '==', cumpleId));
         return onSnapshot(q, (snapshot) => {
-          const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Participante));
+          const list = snapshot.docs
+            .map(d => ({ id: d.id, ...d.data() } as Participante))
+            .filter(p => isItemDisponible(p));
           list.sort((a, b) => b.notificadoEn - a.notificadoEn);
           callback(list);
         });
@@ -332,7 +427,7 @@ export const api = {
     const loadLocal = () => {
       const all = getLocal<Participante[]>(LOCAL_STORAGE_KEY_PARTS, initialParticipantes);
       const filtered = all
-        .filter(p => p.cumpleId === cumpleId)
+        .filter(p => p.cumpleId === cumpleId && isItemDisponible(p))
         .sort((a, b) => b.notificadoEn - a.notificadoEn);
       callback(filtered);
     };
@@ -349,13 +444,14 @@ export const api = {
       cumpleId,
       nombreFamilia: nombreFamilia.trim(),
       estado: 'notificado',
+      disponible: '',
       notificadoEn: Date.now(),
       nota: nota?.trim() || undefined
     };
 
     if (isFirebaseConfigured && db) {
       try {
-        await setDoc(doc(db, 'participantes', id), newPart);
+        await setDoc(doc(db, 'participantes', id), sanitizeForFirestore(newPart));
       } catch (err) {
         console.error('Error saving part in firestore:', err);
       }
@@ -369,14 +465,14 @@ export const api = {
   },
 
   async toggleEstadoParticipante(participanteId: string, nuevoEstado: 'notificado' | 'confirmado'): Promise<void> {
-    const updates: Partial<Participante> = {
+    const firestoreUpdates: Record<string, any> = {
       estado: nuevoEstado,
-      confirmadoEn: nuevoEstado === 'confirmado' ? Date.now() : undefined
+      confirmadoEn: nuevoEstado === 'confirmado' ? Date.now() : null
     };
 
     if (isFirebaseConfigured && db) {
       try {
-        await updateDoc(doc(db, 'participantes', participanteId), updates);
+        await updateDoc(doc(db, 'participantes', participanteId), sanitizeForFirestore(firestoreUpdates));
       } catch (err) {
         console.error('Error updating part status in firestore:', err);
       }
@@ -385,7 +481,11 @@ export const api = {
     const parts = getLocal<Participante[]>(LOCAL_STORAGE_KEY_PARTS, initialParticipantes);
     const index = parts.findIndex(p => p.id === participanteId);
     if (index !== -1) {
-      parts[index] = { ...parts[index], ...updates };
+      parts[index] = {
+        ...parts[index],
+        estado: nuevoEstado,
+        confirmadoEn: nuevoEstado === 'confirmado' ? Date.now() : undefined
+      };
       setLocal(LOCAL_STORAGE_KEY_PARTS, parts);
     }
   },
@@ -409,12 +509,5 @@ export const api = {
     if (!cumple) return;
     const fotos = cumple.fotosRegalo || [];
     await this.updateCumple(cumpleId, { fotosRegalo: [...fotos, fotoUrl] });
-  },
-
-  async agregarComprobante(cumpleId: string, fotoUrl: string): Promise<void> {
-    const cumple = await this.getCumple(cumpleId);
-    if (!cumple) return;
-    const fotos = cumple.fotosComprobantes || [];
-    await this.updateCumple(cumpleId, { fotosComprobantes: [...fotos, fotoUrl] });
   }
 };

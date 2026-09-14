@@ -7,7 +7,6 @@ import {
   Clock, 
   UserPlus, 
   Trash2, 
-  Sparkles, 
   Building2, 
   User, 
   Check, 
@@ -21,13 +20,12 @@ import { Navbar } from '../components/Navbar';
 import { CopyButton } from '../components/CopyButton';
 import { WhatsAppModal } from '../components/WhatsAppModal';
 import { GiftGallery } from '../components/GiftGallery';
-import { UnlockModal } from '../components/UnlockModal';
 import { triggerConfetti, triggerMegaConfetti } from '../utils/confetti';
 
 export const CumpleView: React.FC = () => {
   const { salaId, cumpleId } = useParams<{ salaId: string; cumpleId: string }>();
   const navigate = useNavigate();
-  const { isSalaUnlocked, showToast } = useSala();
+  const { showToast } = useSala();
 
   const [sala, setSala] = useState<Sala | null>(null);
   const [cumple, setCumple] = useState<Cumpleanios | null>(null);
@@ -74,7 +72,7 @@ export const CumpleView: React.FC = () => {
   if (loading) {
     return (
       <div className="app-container" style={{ alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '1.2rem' }}>
+        <p style={{ color: 'var(--notion-text-muted)', fontSize: '0.95rem' }}>
           Cargando colecta... 🎈
         </p>
       </div>
@@ -85,10 +83,12 @@ export const CumpleView: React.FC = () => {
     return (
       <div className="app-container" style={{ padding: '2rem', textAlign: 'center' }}>
         <Navbar title="LoCumpleanito" showBack backTo="/" />
-        <div className="card-zamba card-zamba-rojo" style={{ marginTop: '2rem' }}>
+        <div className="card-zamba" style={{ marginTop: '2rem' }}>
           <h2>Cumpleaños no encontrado 🎂</h2>
-          <p style={{ margin: '0.85rem 0' }}>No pudimos encontrar los datos de esta colecta.</p>
-          <button onClick={() => navigate(salaId ? `/sala/${salaId}` : '/')} className="btn-zamba btn-blanco">
+          <p style={{ margin: '0.85rem 0', color: 'var(--notion-text-muted)' }}>
+            No pudimos encontrar los datos de esta colecta.
+          </p>
+          <button onClick={() => navigate(salaId ? `/sala/${salaId}` : '/')} className="notion-btn btn-secondary">
             Volver a la Sala
           </button>
         </div>
@@ -96,7 +96,6 @@ export const CumpleView: React.FC = () => {
     );
   }
 
-  const unlocked = isSalaUnlocked(sala.id);
 
   // Cálculos
   const confirmados = participantes.filter(p => p.estado === 'confirmado');
@@ -145,7 +144,7 @@ export const CumpleView: React.FC = () => {
     
     if (nuevoEstado === 'confirmado') {
       triggerConfetti();
-      showToast(`¡Pago de ${p.nombreFamilia} confirmado! ✅`, 'success');
+      showToast(`¡Pago de ${p.nombreFamilia} verificado! ✅`, 'success');
     } else {
       showToast(`Pago marcado como pendiente`, 'info');
     }
@@ -178,109 +177,113 @@ export const CumpleView: React.FC = () => {
   return (
     <div className="app-container">
       <Navbar
-        title={sala.nombre}
-        subtitle="Colecta de Cumpleaños"
+        title={cumple.nombreAgasajado}
+        subtitle={sala.nombre}
         showBack
         backTo={`/sala/${sala.id}`}
         rightAction={
           <button
             onClick={() => setModalWhatsApp(true)}
-            className="btn-zamba btn-sol btn-sm"
-            style={{ borderRadius: 'var(--radius-full)', padding: '0.4rem 0.75rem', gap: '0.35rem' }}
+            className="notion-btn btn-secondary btn-sm"
             title="Compartir en WhatsApp"
           >
-            <Share2 size={16} />
+            <Share2 size={14} />
             <span>Compartir</span>
           </button>
         }
       />
 
-      {!unlocked && <UnlockModal sala={sala} />}
 
-      <main style={{ padding: '1.25rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <main style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         
-        {/* Tarjeta Hero del Agasajado */}
-        <div className="card-zamba card-zamba-sol" style={{ position: 'relative', textAlign: 'center', padding: '1.5rem 1.25rem 1.25rem' }}>
-          <div className="tape-sticker" />
-
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'var(--z-celeste)', color: '#fff', padding: '0.25rem 0.85rem', borderRadius: 'var(--radius-full)', border: '2px solid var(--z-borde)', marginBottom: '0.65rem', boxShadow: 'var(--shadow-sm)' }}>
-            <Sparkles size={14} color="#FFBC00" />
-            <span style={{ fontSize: '0.85rem', fontWeight: 800 }}>REGALO COMUNITARIO</span>
-          </div>
-
-          <h1 style={{ fontSize: '2.4rem', color: 'var(--z-tinta)', lineHeight: 1.1, margin: '0.2rem 0' }}>
-            {cumple.nombreAgasajado}
+        {/* Page Header Notion */}
+        <div style={{ paddingBottom: '0.75rem', borderBottom: '1px solid var(--notion-divider)' }}>
+          <div style={{ fontSize: '2.4rem', lineHeight: 1, marginBottom: '0.5rem' }}>🎂</div>
+          <h1 style={{ fontSize: '1.85rem', marginBottom: '0.5rem' }}>
+            Cumpleaños de {cumple.nombreAgasajado}
           </h1>
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '0.4rem', flexWrap: 'wrap' }}>
-            <span className="badge-zamba badge-celeste" style={{ fontSize: '0.85rem' }}>
-              <Calendar size={14} />
-              Festejo: {formatFecha(cumple.fechaCumple)}
-            </span>
-            {cumple.fechaLimitePago && (
-              <span className="badge-zamba badge-rojo" style={{ fontSize: '0.85rem' }}>
-                <Clock size={14} />
-                Límite pago: {formatFecha(cumple.fechaLimitePago)}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+            <div className="notion-property-row" style={{ borderBottom: 'none', padding: '0.2rem 0' }}>
+              <span className="notion-property-label">
+                <Calendar size={14} />
+                <span>Fecha festejo</span>
               </span>
-            )}
-          </div>
-
-          {cumple.estado === 'cerrado' && (
-            <div style={{ marginTop: '0.85rem', background: 'var(--z-verde)', color: '#fff', padding: '0.4rem', borderRadius: 'var(--radius-sm)', fontWeight: 800, border: '2px solid var(--z-borde)' }}>
-              🎉 ¡Colecta finalizada y regalo entregado!
+              <span style={{ fontSize: '0.88rem', fontWeight: 500 }}>{formatFecha(cumple.fechaCumple)}</span>
             </div>
-          )}
+
+            {cumple.fechaLimitePago && (
+              <div className="notion-property-row" style={{ borderBottom: 'none', padding: '0.2rem 0' }}>
+                <span className="notion-property-label">
+                  <Clock size={14} />
+                  <span>Límite para aportar</span>
+                </span>
+                <span className="notion-tag tag-red" style={{ fontSize: '0.78rem' }}>
+                  {formatFecha(cumple.fechaLimitePago)}
+                </span>
+              </div>
+            )}
+
+            <div className="notion-property-row" style={{ borderBottom: 'none', padding: '0.2rem 0' }}>
+              <span className="notion-property-label">
+                <span>Estado</span>
+              </span>
+              <span className={`notion-tag ${cumple.estado === 'activo' ? 'tag-green' : 'tag-gray'}`}>
+                {cumple.estado === 'activo' ? 'Colecta Abierta' : 'Finalizada'}
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Tarjeta de Datos de Transferencia (1-Tap Copy) */}
         <div className="card-zamba" style={{ background: '#ffffff' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px dashed var(--z-papel-dark)', paddingBottom: '0.75rem', marginBottom: '0.85rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--notion-divider)', paddingBottom: '0.85rem', marginBottom: '0.85rem' }}>
             <div>
-              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--z-tinta-suave)', display: 'block' }}>
-                MONTO POR FAMILIA
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--notion-text-subtle)', textTransform: 'uppercase' }}>
+                Monto por familia
               </span>
-              <span style={{ fontSize: '1.8rem', fontFamily: 'var(--font-heading)', fontWeight: 900, color: 'var(--z-verde-dark)' }}>
+              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--notion-text)' }}>
                 ${cumple.montoPorPersona.toLocaleString('es-AR')}
-              </span>
+              </div>
             </div>
             
             <CopyButton
               textToCopy={cumple.montoPorPersona.toString()}
               label="Copiar Monto"
-              successMessage="¡Monto copiado! 💵"
-              variant="verde"
-              size="md"
+              successMessage="Monto copiado 💵"
+              size="sm"
+              variant="secondary"
             />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
             {/* Alias */}
-            <div style={{ background: 'var(--z-papel)', border: '2px solid var(--z-borde)', borderRadius: 'var(--radius-md)', padding: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+            <div style={{ background: 'var(--notion-hover-bg)', border: '1px solid var(--notion-border)', borderRadius: 'var(--radius-sm)', padding: '0.65rem 0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
               <div style={{ minWidth: 0 }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--z-tinta-suave)', display: 'block' }}>
-                  ALIAS DE TRANSFERENCIA
+                <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--notion-text-muted)', display: 'block', textTransform: 'uppercase' }}>
+                  Alias de transferencia
                 </span>
-                <span style={{ fontSize: '1.15rem', fontFamily: 'monospace', fontWeight: 900, color: 'var(--z-celeste-dark)', wordBreak: 'break-all' }}>
+                <span style={{ fontSize: '1.05rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--btn-blue-bg)', wordBreak: 'break-all' }}>
                   {cumple.alias}
                 </span>
               </div>
               <CopyButton
                 textToCopy={cumple.alias}
-                label="Copiar Alias"
-                successMessage="¡Alias copiado! 📋"
-                variant="sol"
-                size="md"
+                label="Copiar"
+                successMessage="Alias copiado 📋"
+                size="sm"
+                variant="primary"
               />
             </div>
 
             {/* CBU / CVU */}
             {cumple.cbu && (
-              <div style={{ background: 'var(--z-crema)', border: '1.5px solid var(--z-borde)', borderRadius: 'var(--radius-sm)', padding: '0.6rem 0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+              <div style={{ background: 'var(--notion-card-bg)', border: '1px solid var(--notion-border)', borderRadius: 'var(--radius-sm)', padding: '0.55rem 0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
                 <div style={{ minWidth: 0 }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--z-tinta-suave)', display: 'block' }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--notion-text-muted)', display: 'block' }}>
                     CBU / CVU
                   </span>
-                  <span style={{ fontSize: '0.9rem', fontFamily: 'monospace', fontWeight: 700 }}>
+                  <span style={{ fontSize: '0.86rem', fontFamily: 'var(--font-mono)' }}>
                     {cumple.cbu}
                   </span>
                 </div>
@@ -288,21 +291,21 @@ export const CumpleView: React.FC = () => {
                   textToCopy={cumple.cbu}
                   label="Copiar"
                   size="sm"
-                  variant="blanco"
+                  variant="secondary"
                 />
               </div>
             )}
 
             {/* Titular y Banco */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.88rem', padding: '0.25rem 0.5rem', color: 'var(--z-tinta-suave)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.85rem', color: 'var(--notion-text-muted)', paddingTop: '0.25rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <User size={15} color="var(--z-tinta)" />
-                <span>Titular: <strong>{cumple.titular}</strong></span>
+                <User size={14} style={{ color: 'var(--notion-text-subtle)' }} />
+                <span>Titular: <strong style={{ color: 'var(--notion-text)' }}>{cumple.titular}</strong></span>
               </div>
               {cumple.banco && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <Building2 size={15} color="var(--z-tinta)" />
-                  <span>Banco / Billetera: <strong>{cumple.banco}</strong></span>
+                  <Building2 size={14} style={{ color: 'var(--notion-text-subtle)' }} />
+                  <span>Banco/Billetera: <strong style={{ color: 'var(--notion-text)' }}>{cumple.banco}</strong></span>
                 </div>
               )}
             </div>
@@ -313,97 +316,101 @@ export const CumpleView: React.FC = () => {
         {cumple.estado === 'activo' && (
           <button
             onClick={() => setModalSumarse(true)}
-            className="btn-zamba btn-verde btn-lg btn-block"
-            style={{ fontSize: '1.25rem', padding: '1rem', boxShadow: 'var(--shadow-lg)' }}
+            className="notion-btn btn-primary btn-block btn-lg"
           >
-            <UserPlus size={24} />
+            <UserPlus size={18} />
             <span>¡Me sumo y ya transferí! 🚀</span>
           </button>
         )}
 
-        {/* Termómetro de Recaudación y Progreso */}
-        <div className="card-zamba card-zamba-celeste" style={{ padding: '1.1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <h3 style={{ fontSize: '1.1rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <CheckCheck size={18} color="var(--z-verde-dark)" />
+        {/* Termómetro de Progreso Notion */}
+        <div className="card-zamba" style={{ padding: '1.15rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
+            <h3 style={{ fontSize: '0.95rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <CheckCheck size={16} style={{ color: '#0f7b6c' }} />
               <span>Progreso de la Colecta</span>
             </h3>
-            <span style={{ fontSize: '0.9rem', fontWeight: 800 }}>
-              {confirmados.length} {confirmados.length === 1 ? 'pago' : 'pagos'} ({totalAportantes} sumados)
+            <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+              {confirmados.length} {confirmados.length === 1 ? 'confirmado' : 'confirmados'} ({totalAportantes} sumados)
             </span>
           </div>
 
           <div className="progress-bar-container" style={{ marginBottom: '0.65rem' }}>
             <div
-              className="progress-bar-fill progress-bar-stripes"
-              style={{ width: `${Math.min(100, Math.max(8, totalAportantes > 0 ? (confirmados.length / totalAportantes) * 100 : 0))}%` }}
+              className="progress-bar-fill progress-bar-green"
+              style={{ width: `${Math.min(100, Math.max(5, totalAportantes > 0 ? (confirmados.length / totalAportantes) * 100 : 0))}%` }}
             />
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--z-tinta-suave)' }}>
-            <span>Confirmado: <strong>${dineroRecaudado.toLocaleString('es-AR')}</strong></span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: 'var(--notion-text-muted)' }}>
+            <span>Recaudado confirmado: <strong style={{ color: 'var(--notion-text)' }}>${dineroRecaudado.toLocaleString('es-AR')}</strong></span>
             {dineroEnCamino > 0 && (
-              <span style={{ color: 'var(--z-sol-dark)' }}>
-                Por validar: <strong>${dineroEnCamino.toLocaleString('es-AR')}</strong>
+              <span className="notion-tag tag-yellow">
+                Por validar: ${dineroEnCamino.toLocaleString('es-AR')}
               </span>
             )}
           </div>
         </div>
 
-        {/* Lista Transparente de Familias y Participantes */}
+        {/* Lista de Familias (Notion Table / List) */}
         <div className="card-zamba" style={{ background: '#ffffff' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
-            <h3 style={{ fontSize: '1.2rem', margin: 0 }}>
+            <h3 style={{ fontSize: '1.05rem', margin: 0 }}>
               Familias que aportan ({participantes.length})
             </h3>
-            <span style={{ fontSize: '0.75rem', color: 'var(--z-tinta-suave)' }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--notion-text-subtle)' }}>
               Toca para validar
             </span>
           </div>
 
           {participantes.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--z-tinta-suave)', background: 'var(--z-papel)', borderRadius: 'var(--radius-sm)', border: '2px dashed var(--z-borde)' }}>
-              <p style={{ margin: 0, fontWeight: 700 }}>Aún no se registró ningún pago.</p>
-              <p style={{ fontSize: '0.85rem', margin: '0.35rem 0 0' }}>
-                ¡Sé el primero en transferir y sumarte a la lista!
+            <div
+              style={{
+                textAlign: 'center',
+                padding: '1.5rem',
+                color: 'var(--notion-text-muted)',
+                background: 'var(--callout-gray-bg)',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px dashed var(--notion-border-strong)'
+              }}
+            >
+              <p style={{ margin: 0, fontWeight: 500 }}>Aún no se registró ningún aporte.</p>
+              <p style={{ fontSize: '0.82rem', margin: '0.35rem 0 0' }}>
+                ¡Hacé tu transferencia y sé el primero en sumarte a la lista!
               </p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {participantes.map(p => {
                 const isConfirmed = p.estado === 'confirmado';
 
                 return (
                   <div
                     key={p.id}
-                    className="card-zamba"
+                    className="notion-list-item"
                     style={{
-                      padding: '0.75rem 0.9rem',
-                      marginBottom: 0,
-                      background: isConfirmed ? 'var(--z-verde-light)' : 'var(--z-sol-light)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '0.5rem'
+                      padding: '0.65rem 0.85rem',
+                      cursor: 'default',
+                      background: isConfirmed ? '#fafcfb' : '#fffdfa'
                     }}
                   >
                     <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-                        <span style={{ fontWeight: 800, fontSize: '0.98rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                        <span style={{ fontWeight: 600, fontSize: '0.92rem', color: 'var(--notion-text)' }}>
                           {p.nombreFamilia}
                         </span>
                         {isConfirmed ? (
-                          <span className="badge-zamba badge-verde" style={{ fontSize: '0.7rem' }}>
+                          <span className="notion-tag tag-green" style={{ fontSize: '0.7rem' }}>
                             <CheckCircle2 size={11} /> Confirmado
                           </span>
                         ) : (
-                          <span className="badge-zamba badge-sol" style={{ fontSize: '0.7rem' }}>
+                          <span className="notion-tag tag-yellow" style={{ fontSize: '0.7rem' }}>
                             <Clock size={11} /> Avisó transferencia
                           </span>
                         )}
                       </div>
                       {p.nota && (
-                        <p style={{ fontSize: '0.8rem', color: 'var(--z-tinta-suave)', margin: '0.2rem 0 0', fontStyle: 'italic' }}>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--notion-text-muted)', margin: '0.15rem 0 0', fontStyle: 'italic' }}>
                           "{p.nota}"
                         </p>
                       )}
@@ -413,29 +420,30 @@ export const CumpleView: React.FC = () => {
                       {/* Botón para validar pago */}
                       <button
                         onClick={() => handleToggleValidacion(p)}
-                        className={`btn-zamba btn-sm ${isConfirmed ? 'btn-blanco' : 'btn-verde'}`}
-                        style={{ padding: '0.4rem 0.65rem' }}
-                        title={isConfirmed ? 'Desmarcar confirmación' : 'Confirmar que llegó el dinero'}
+                        className={`notion-btn btn-sm ${isConfirmed ? 'btn-secondary' : 'btn-verde'}`}
+                        style={{ padding: '0.3rem 0.55rem' }}
+                        title={isConfirmed ? 'Marcar como pendiente' : 'Confirmar acreditación del dinero'}
                       >
                         {isConfirmed ? (
                           <>
-                            <RotateCcw size={14} />
-                            <span style={{ fontSize: '0.75rem' }}>Desmarcar</span>
+                            <RotateCcw size={12} />
+                            <span style={{ fontSize: '0.72rem' }}>Pendiente</span>
                           </>
                         ) : (
                           <>
-                            <Check size={14} strokeWidth={3} />
-                            <span style={{ fontSize: '0.75rem' }}>Confirmar</span>
+                            <Check size={12} />
+                            <span style={{ fontSize: '0.72rem' }}>Acreditar</span>
                           </>
                         )}
                       </button>
 
                       <button
                         onClick={() => handleEliminarParticipante(p)}
-                        style={{ background: 'none', border: 'none', color: 'var(--z-tinta-suave)', cursor: 'pointer', padding: '4px' }}
-                        title="Eliminar"
+                        className="notion-btn btn-ghost btn-sm"
+                        style={{ padding: '0.3rem', color: 'var(--notion-text-subtle)' }}
+                        title="Eliminar registro"
                       >
-                        <Trash2 size={15} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </div>
@@ -445,23 +453,22 @@ export const CumpleView: React.FC = () => {
           )}
         </div>
 
-        {/* Sección de Rendición de Cuentas y Fotos */}
+        {/* Sección de Fotos del Regalo */}
         <GiftGallery
           cumpleId={cumple.id}
           fotosRegalo={cumple.fotosRegalo}
-          fotosComprobantes={cumple.fotosComprobantes}
           regaloDescripcion={cumple.regaloDescripcion}
           isClosed={cumple.estado === 'cerrado'}
         />
 
         {/* Opciones de Finalización / Administración */}
-        <div style={{ textAlign: 'center', padding: '0.5rem 0 1.5rem' }}>
+        <div style={{ textAlign: 'center', padding: '0.5rem 0 1rem' }}>
           <button
             onClick={handleToggleCerrarCumple}
-            className="btn-zamba btn-blanco btn-sm"
-            style={{ color: cumple.estado === 'activo' ? 'var(--z-tinta-suave)' : 'var(--z-celeste-dark)' }}
+            className="notion-btn btn-ghost btn-sm"
+            style={{ color: 'var(--notion-text-muted)' }}
           >
-            {cumple.estado === 'activo' ? '🔒 Marcar Colecta como Finalizada' : '🔓 Reabrir Colecta'}
+            {cumple.estado === 'activo' ? '🔒 Marcar colecta como finalizada' : '🔓 Reabrir colecta'}
           </button>
         </div>
       </main>
@@ -469,21 +476,24 @@ export const CumpleView: React.FC = () => {
       {/* Modal Registrar Transferencia */}
       {modalSumarse && (
         <div className="modal-overlay" onClick={() => setModalSumarse(false)}>
-          <div className="modal-content card-zamba-sol" onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ fontSize: '1.4rem', marginBottom: '0.35rem' }}>
-              ¡Avisar mi Transferencia! 🎁
-            </h2>
-            <p style={{ fontSize: '0.88rem', color: 'var(--z-tinta-suave)', marginBottom: '1rem' }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+              <span style={{ fontSize: '1.3rem' }}>🎁</span>
+              <h2 style={{ fontSize: '1.25rem', margin: 0 }}>
+                Avisar mi Transferencia
+              </h2>
+            </div>
+            <p style={{ fontSize: '0.88rem', color: 'var(--notion-text-muted)', marginBottom: '1rem' }}>
               Transferiste <strong>${cumple.montoPorPersona.toLocaleString('es-AR')}</strong> al Alias <code>{cumple.alias}</code>.
             </p>
 
             <form onSubmit={handleAvisarPago}>
               <div className="input-group">
-                <label className="input-label">¿A nombre de quién registramos el pago?:</label>
+                <label className="input-label">¿A nombre de quién registramos el pago? *</label>
                 <input
                   type="text"
-                  className="input-zamba"
-                  placeholder="Ej: Familia de Lucas / Mamá de Sofi"
+                  className="notion-input"
+                  placeholder="Ej: Familia de Sofi / Mamá de Lucas"
                   value={nombreFamilia}
                   onChange={(e) => setNombreFamilia(e.target.value)}
                   required
@@ -492,21 +502,21 @@ export const CumpleView: React.FC = () => {
               </div>
 
               <div className="input-group">
-                <label className="input-label">Mensaje o saludo para el cumpleañero (opcional):</label>
+                <label className="input-label">Mensaje o saludo para el cumpleañero (opcional)</label>
                 <input
                   type="text"
-                  className="input-zamba"
-                  placeholder="Ej: ¡Feliz cumple Mateo!"
+                  className="notion-input"
+                  placeholder="Ej: ¡Muy feliz cumple Mateo!"
                   value={notaOpcional}
                   onChange={(e) => setNotaOpcional(e.target.value)}
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.25rem' }}>
+              <div style={{ display: 'flex', gap: '0.65rem', marginTop: '1.5rem' }}>
                 <button
                   type="button"
                   onClick={() => setModalSumarse(false)}
-                  className="btn-zamba btn-blanco"
+                  className="notion-btn btn-secondary"
                   style={{ flex: 1 }}
                 >
                   Cancelar
@@ -514,7 +524,7 @@ export const CumpleView: React.FC = () => {
                 <button
                   type="submit"
                   disabled={guardandoPago}
-                  className="btn-zamba btn-verde"
+                  className="notion-btn btn-primary"
                   style={{ flex: 1.5 }}
                 >
                   {guardandoPago ? 'Guardando...' : '¡Listo, ya transferí! 🚀'}
